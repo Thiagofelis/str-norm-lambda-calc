@@ -1,0 +1,251 @@
+\documentclass[]{StandardTemplate}
+\title{A Proof of the Strong Normalization of the Simply-Typed Lambda Calculus}
+\usepackage{bussproofs}
+\usepackage{tikz-cd}
+\usepackage{stmaryrd}
+\usepackage{enumitem}
+\usepackage{bussproofs}
+\newtheorem{claim}{Claim}
+
+\begin{document}
+\maketitle
+
+\newcommand{\red}{\longrightarrow}
+
+
+This proof uses the reducibility technique and is based on the one given in Proofs and Types, by Jean-Yves Girard. Only a small number of changes was made.
+
+\section{Basic Definitions}
+\label{sec:basic}
+
+
+\begin{definition}[Lambda terms]
+  Let $ \mathcal{C} $ be an infinite countable set of constants and $ \mathcal{X} $ an infinite countable set of variables. We define the terms of the simply-typed lambda calculus by the grammar
+  \[
+M, N ::= x \in \mathcal{X}~|~c \in \mathcal{C}~|~M~N~|~\lambda x. M
+   \]
+ \end{definition}
+ 
+Reduction on the lambda-calculus is given by the rules
+
+\begin{center}
+\AxiomC{$M \red M'$}
+\RightLabel{appL}
+\UnaryInfC{$M N \red M' N$}
+\DisplayProof
+\hskip 2em
+\AxiomC{$N \red N'$}
+\RightLabel{appR}
+\UnaryInfC{$M N \red M N'$}
+\DisplayProof
+\end{center}
+\begin{center}
+\AxiomC{$M \red M'$}
+\RightLabel{$ \xi $}
+\UnaryInfC{$\lambda x. M \red \lambda x. M'$}
+\DisplayProof
+\hskip 2em
+\AxiomC{$$}
+\RightLabel{$ \beta $}
+\UnaryInfC{$(\lambda x . M)N \red M(N/x)$}
+\DisplayProof
+\end{center}
+
+\begin{definition}[Simple types]
+  Let $ \mathcal{B} $ be an infinite countable set of base types. We define the grammar of simple types by \[
+A, B ::= p \in \mathcal{B}~|~A \to B
+\]
+\end{definition}
+
+A context $ \Gamma $ is a set of or pairs $ x : A $, where $ x $ is a variable and $ A $ is a type, such that any variable can only appear once. A signature $ \Sigma $ is a set of pairs $ c : A $, where $ c $ is a constant, $ A $ is a type and every constant can only appear once. 
+
+
+If $ M $ is a lambda term, we define the type judgment $ \Sigma; \Gamma \vdash M : A $ inductively by
+
+\begin{center}
+\AxiomC{$x : A \in \Gamma$}
+\RightLabel{ax}
+\UnaryInfC{$\Sigma; \Gamma \vdash x : A$}
+\DisplayProof
+\hskip 1.5em
+\AxiomC{$\Sigma; \Gamma, x : A \vdash M : B$}
+\RightLabel{abs}
+\UnaryInfC{$\Sigma; \Gamma \vdash \lambda x . M : A \to B$}
+\DisplayProof
+\end{center}
+\begin{center}
+\AxiomC{$c : A \in \Sigma$}
+\RightLabel{cons}
+\UnaryInfC{$\Sigma; \Gamma \vdash c : A$}
+\DisplayProof
+\hskip 1.5em
+\AxiomC{$\Sigma;\Gamma \vdash M : A \to B$}
+\AxiomC{$\Sigma;\Gamma \vdash N :  A$}
+\RightLabel{app}
+\BinaryInfC{$\Sigma;\Gamma \vdash M N : B$}
+\DisplayProof
+\end{center}
+
+We assume an underlying signature and we write $ \Gamma \vdash M : A $ for simplification reasons.
+
+The following lemmas are standard and will be used on the strong normalization proof. Their proofs are omitted.
+
+\begin{lem}
+  \label{red}
+If $ M \red^* M' $ and $ N \red^* N'$ then $ M(N/x) \red^* M'(N'/x) $.
+\end{lem}
+
+\begin{lem}
+  \label{tree}
+If $ M $ is a term, we define its reduction tree as follows. A node is a term $ N $ with $ M \red^* N $ and there is an edge from $ N $ to $ N' $ when $ N \red N' $. Then its reduction tree is finite iff $ M $ is SN.
+\end{lem}
+
+\begin{lem}
+  \label{outer}
+  Let $ M N $ be a term and $ M N \red^* Q $ a reduction in which $ \beta $ is never applied at the outer application. Then $ Q = M' N' $ with $ M \red^* M' $ and $ N \red^* N' $.
+\end{lem}
+
+
+\section{Strong Normalization}
+\label{sec:str}
+
+
+
+\begin{definition}[]
+  If $ A $ is a type, we define $ \llbracket A \rrbracket $ by induction on its structure as
+  \begin{itemize}
+  \item if $ A = p \in \mathcal{B} $, then $ \llbracket p \rrbracket =$ SN
+  \item if $ A = B \to C $, then $ \llbracket B \to C \rrbracket = \{M \in \text{SN} \mid \forall N \in \llbracket B \rrbracket, M N \in \llbracket C \rrbracket \}$
+  \end{itemize}
+  where SN denotes the set of strongly normalizing terms.
+\end{definition}
+
+\begin{lem}
+  \label{pres}
+ Let $ A $ be any type. If $ M \red M' $, then $ M \in \llbracket A \rrbracket $ implies $ M' \in \llbracket A \rrbracket $.
+\end{lem}
+\begin{proof}
+  By induction on the structure of $ A $.  For the base case, note that if $ M $ is SN then $ M' $  is also SN.
+
+  For the induction step we have $ A = B \to C $. First note that the previous observation also holds, thus $ M' $ is SN. It is left to prove that for all $ N \in \llbracket B \rrbracket $ we have $ M' N \in \llbracket C \rrbracket $. But $ M N \red M' N $, where $ M N \in \llbracket C \rrbracket $ and $ C $ is structurally smaller then $ A $. We thus conclude by the induction hypothesis that $ M' N \in \llbracket C \rrbracket$.
+\end{proof}
+
+
+
+\begin{prop}[]
+  \label{prop:1}
+  Let $ A $ be a type and let $ M $ be a variable, constant or of the form $ M_1 M_2 $. If for all $ N $ with $M \red N $ we have $ N \in \llbracket A \rrbracket $ then $M \in \llbracket A \rrbracket $.
+\end{prop}
+\begin{proof}
+  By induction on the structure of $ A $. For the base case $ A = p $, note that as every reduction path goes through a SN term, then $ M $ must also be SN.
+
+  For the induction step we have $ A = B \to C $. The previous remark also holds, so we are left to prove that for all $ Q\in \llbracket B \rrbracket $, $ M Q \in \llbracket C \rrbracket $. As $ Q $ is SN, then by Lemma \ref{tree} its reduction tree is finite. We show the result by induction on its height. As we now have nested inductions, we let IH 1 be the induction hypothesis of the outer induction and IH 2 the one of the inner one.
+
+  \begin{itemize}
+  \item For the base case, $ Q $ is in normal form and thus every reduction $ M Q \red Q'  $ takes place on $ M $. We thus have $ Q' = N Q $ with $ M \red N $. By hypothesis, $ N \in \llbracket B \to C \rrbracket$, and thus $ N Q \in \llbracket C \rrbracket $. Therefore, every $ Q' $ with $ M Q \red Q' $ is in $ \llbracket C \rrbracket $. As $ C $ is structurally smaller then $ A $, we apply IH 1 to find $ MQ \in \llbracket  C \rrbracket $.
+  \item For the induction step, we consider all the reductions $ M Q \red N $ and we do a case analysis on the rules that can be applied on the head, which are only appL and appR. We show that each $ N $ is in $ \llbracket C \rrbracket $.
+
+    If the rule is appR we have $ M Q \red M Q' $ with $ Q \red Q' $. As the tree of $ Q' $ has a lower height, we apply IH 2 to conclude $ M Q' \in \llbracket C \rrbracket $.
+    
+    If the rule is appL we have $ M Q \red N Q $ with $ M \red N $. By hypothesis, $ N \in \llbracket B \to C \rrbracket$, and thus $ N Q \in \llbracket C \rrbracket $.
+
+    We have show that for all $ N $ with $ M Q \red N $, $ N \in \llbracket C \rrbracket $. As $ C $ is structurally smaller then $ A $, by IH 1 we get $ MQ \in \llbracket  C \rrbracket $.
+   \end{itemize}
+ \end{proof}
+
+ \begin{cor}
+   \label{consvar}
+   Let $ A $ be any type. If $ M $ is a variable or constant then $ M \in \llbracket A \rrbracket $.
+ \end{cor}
+ \begin{proof}
+   As $ M $ is normal, there is no $ N $ with $ M \red N $, thus the hypothesis of Proposition \ref{prop:1} is verified trivially.
+ \end{proof}
+
+\begin{lem}
+If $ M \in \llbracket A \rrbracket $, $ N \in \llbracket B \rrbracket $ and $ M(N/x) \in \llbracket A \rrbracket $ then $ (\lambda x . M) N \in $ SN.
+\end{lem}
+\begin{proof}
+  First note that no infinite reduction can happen with only appL and appR on the outer application, as this would imply that either $ N $ or $ M $ is not SN.
+
+  Now let $ (\lambda x . M) N \red M_1 \red M_2 \red ...$ be a reduction in which $ \beta $ is applied to the outer application at some point. We write $ (\lambda x . M) N \red^* (\lambda x . M') N' \red_\beta  M'(N'/x) \red^*...$ where $ \beta $ does not occur in the outer application in $ (\lambda x . M) N \red^* (\lambda x . M') N'$.
+
+  Thus, by Lemma \ref{outer} we have $ M \red^* M' $ and $ N \red^* N' $. By Lemma \ref{red}, $ M(N/x) \red^* M'(N'/x)$, and thus $ M'(N'/x) \in \llbracket A \rrbracket$ by Lemma \ref{pres}. In particular, $ M'(N'/x) \in  $ SN and thus $ (\lambda x . M) N \red^* (\lambda x . M') N' \red M' (N'/x) \red^*  ...$ is finite.
+\end{proof}
+
+
+\begin{prop}
+  \label{abs}
+If $ M \in \llbracket A \rrbracket $, $ N \in \llbracket B \rrbracket $ and $ M(N/x) \in \llbracket A \rrbracket $ then $ (\lambda x . M) N \in \llbracket A \rrbracket $.
+\end{prop}
+\begin{proof}
+  As $ (\lambda x . M) N $ is SN, by Lemma \ref{tree} its reduction tree is finite. We show $(\lambda x . M) N \in \llbracket A \rrbracket$ by induction on the height of its reduction tree. For the base case of height zero, as $ (\lambda x . M) N $ is a redex then we can derive absurdity, from which the conclusion follows trivially.
+
+  For the induction step, we consider all the possible $ Q $ with $ (\lambda x . M) N \red Q $ and we do a case analysis on the rule applied at the head
+  \begin{itemize}
+  \item \textbf{AppL} : Then $ Q = (\lambda x. M')N $ with $ \lambda x.M \red \lambda x.M' $ and $ M \red M' $. Using Lemma \ref{red}, this also implies $ M(N/x) \red^* M'(N/x) $. As $ M, M(N/x) \in \llbracket A \rrbracket $, by Lemma \ref{pres}, we have $ M', M'(N/x) \in \llbracket A \rrbracket $. As the reduction tree of $  (\lambda x. M')N $ is smaller, we can apply the induction hypothesis and conclude $(\lambda x. M')N \in \llbracket A \rrbracket$.
+  \item \textbf{AppR} : Then $ Q =  (\lambda x. M)N' $ with $ N \red N' $. Using Lemma \ref{red}, this also implies $ M(N/x) \red^* M(N'/x) $. By Lemma \ref{pres}, we have $ N' \in \llbracket B\rrbracket $ and $M(N'/x) \in \llbracket A \rrbracket $. As the reduction tree of $  (\lambda x. M)N' $ is smaller, we can apply the induction hypothesis and conclude $(\lambda x. M)N' \in \llbracket A \rrbracket$.
+  \item $ \boldsymbol\beta $ : Then $ Q = M(N/x) $, which by hypotheses is in $ \llbracket A \rrbracket $.
+  \end{itemize}
+
+  We have shown that for all $ Q $ with $ (\lambda x. M)N \red Q $ we have $ Q \in \llbracket A \rrbracket $. Hence, by Proposition \ref{prop:1} we have $ (\lambda x. M)N \in \llbracket A \rrbracket $.
+\end{proof}
+
+\begin{thm}[]
+Let $ M $ be a term with $ \Gamma \vdash M : A $ and let $ \sigma $ be a substitution with $ \text{dom~} \sigma = \{ x \mid x : A_x \in \Gamma\} $ and with  $ \sigma(x) \in \llbracket A_x \rrbracket$. Then $ \sigma (M) \in \llbracket A \rrbracket $.
+\end{thm}
+\begin{proof}
+  By induction on the type derivation.
+
+  \textbf{Rule ax} : The derivation ends with
+  \begin{center}
+    \AxiomC{$x : A \in \Gamma$}
+    \RightLabel{ax}
+    \UnaryInfC{$\Gamma \vdash x : A$}
+    \DisplayProof
+  \end{center}
+  Thus $ M = x $ and $ \sigma(x) \in \llbracket A \rrbracket $ by hypothesis.
+
+  \textbf{Rule cons} : The derivation ends with
+
+  \begin{center}
+    \AxiomC{$c : A \in \Sigma$}
+    \RightLabel{cons}
+    \UnaryInfC{$\Gamma \vdash c : A$}
+    \DisplayProof
+  \end{center}
+  Thus $ M = c $ and $ \sigma(c) = c $. By Corollary \ref{consvar}, $ c \in \llbracket A \rrbracket $.
+
+  \textbf{Rule app} : The derivation ends with
+  \begin{center}
+    \AxiomC{$\Gamma \vdash M : B \to A$}
+    \AxiomC{$\Gamma \vdash N : B$}
+    \RightLabel{app}
+    \BinaryInfC{$\Gamma \vdash M N : A$}
+    \DisplayProof
+  \end{center}
+  By the induction hypothesis, $ \sigma (M) \in \llbracket B \to A \rrbracket $ and $ \sigma(N) \in \llbracket B \rrbracket$. By definition of $ \llbracket B \to A \rrbracket $, we get $ \sigma(M) \sigma(N) \in \llbracket A \rrbracket $, and thus $ \sigma (M N) \in \llbracket A \rrbracket $.
+
+  \textbf{Rule abs} : The derivation ends with
+  \begin{center}
+    \AxiomC{$\Gamma, x : B \vdash M : A$}
+    \RightLabel{abs}
+    \UnaryInfC{$\Gamma \vdash \lambda x. M : B \to A$}
+    \DisplayProof
+  \end{center}
+  For $ N \in \llbracket B \rrbracket$, we need to show that $ (\lambda x. \sigma(M)) N \in \llbracket A \rrbracket $.
+
+  Consider the substitution $ \sigma' := (\sigma; x \mapsto x) $. As $ x $ is a variable, then $ x \in \llbracket B \rrbracket $ and thus we can apply the induction hypothesis on $ \Gamma, x : B \vdash M : A $. We thus have $ \sigma (M) = \sigma'(M) \in \llbracket A  \rrbracket$.
+
+  Now consider the substitution $ \tau := (\sigma; x \mapsto N) $. As $ N \in \llbracket B \rrbracket $, we can apply the induction hypothesis once again and find that $ \tau(M) = \sigma(M)(N/x) \in \llbracket A \rrbracket $.
+
+  We have all the hypothesis to apply Lemma \ref{abs}, from which we get $ (\lambda x. \sigma(M)) N \in \llbracket A \rrbracket $.
+\end{proof}
+
+\begin{cor}[]
+Let $ M $ be a term with $ \Gamma \vdash M : A $, then $ M \in SN $.
+\end{cor}
+\begin{proof}
+Let $ \sigma := (x_i \mapsto x_i)_{x_i: A_i \in \Gamma} $. As each $ x_i $ is a variable, then $ x_i \in \llbracket A_i \rrbracket $ and we can apply the previous theorem. Thus, $ M = \sigma(M) \in \llbracket A \rrbracket $, and in particular we deduce $ M \in $ SN.
+\end{proof}
+
+\end{document}
